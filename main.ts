@@ -1,23 +1,43 @@
-import { mkdirSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
+import * as fs from "node:fs";
+import * as path from "node:path";
 
-const ENTRY_TEXT =
-  "I asked my butcher if I could order sausages online. He said he'd send me a few links.";
+// Dad Joke Showdown v2 — one-line dad joke, max 200 characters.
+const ENTRY_TEXT: string =
+  "I brought a tape measure to the family reunion because Dad said we had some distant relatives.";
 
-if (ENTRY_TEXT.length !== 86) {
-  throw new Error(`entry text must be exactly 86 characters, got ${ENTRY_TEXT.length}`);
+// Exact length verified by command (wc -m and Node .length): 94 characters.
+const EXPECTED_LENGTH: number = 94;
+const MAX_LENGTH: number = 200;
+
+if (ENTRY_TEXT.length !== EXPECTED_LENGTH) {
+  throw new Error(
+    `Entry length mismatch: expected ${EXPECTED_LENGTH} characters, got ${ENTRY_TEXT.length}`,
+  );
 }
 
-const args = process.argv.slice(2);
-let outputDir = "/output";
-const flagIndex = args.indexOf("--output");
-if (flagIndex !== -1) {
-  if (flagIndex + 1 >= args.length) {
-    throw new Error("--output requires a directory argument");
+if (ENTRY_TEXT.length > MAX_LENGTH) {
+  throw new Error(
+    `Entry exceeds the ${MAX_LENGTH}-character limit: ${ENTRY_TEXT.length}`,
+  );
+}
+
+function main(): void {
+  // Read /input if present (no input file is required for this bounty).
+  const inputDir: string = "/input";
+  if (fs.existsSync(inputDir)) {
+    for (const file of fs.readdirSync(inputDir)) {
+      const filePath: string = path.join(inputDir, file);
+      if (fs.statSync(filePath).isFile()) {
+        fs.readFileSync(filePath, "utf8");
+      }
+    }
   }
-  outputDir = args[flagIndex + 1];
+
+  // Write the entry to /output/entry.txt (never write directly to /output).
+  const outputDir: string = "/output";
+  fs.mkdirSync(outputDir, { recursive: true });
+  const outPath: string = path.join(outputDir, "entry.txt");
+  fs.writeFileSync(outPath, ENTRY_TEXT, "utf8");
 }
 
-mkdirSync(outputDir, { recursive: true });
-writeFileSync(join(outputDir, "entry.txt"), ENTRY_TEXT, "utf8");
-process.exit(0);
+main();
